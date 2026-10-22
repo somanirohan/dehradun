@@ -201,7 +201,7 @@ class VLMCore:
 
         # --- load with quantization ---
         if quant == "nf4":
-            offload_dir = os.environ.get("VLM_OFFLOAD_DIR", "D:/qwen_vlm_offload")
+            offload_dir = os.path.abspath("models/offload")
             os.makedirs(offload_dir, exist_ok=True)
             self._model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
                 self.config.model_name,
@@ -247,12 +247,13 @@ class VLMCore:
                 "Supported: 'nf4', or null for full precision."
             )
 
+        
         self._processor = AutoProcessor.from_pretrained(
             self.config.model_name,
             trust_remote_code=True,
             min_pixels=self.config.min_pixels,
             max_pixels=self.config.max_pixels,
-            local_files_only=True,
+            local_files_only=False,
         )
 
         self._model.eval()
