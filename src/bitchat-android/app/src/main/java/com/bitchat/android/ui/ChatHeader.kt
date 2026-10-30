@@ -427,53 +427,67 @@ fun ConversationHeader(
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     val colorScheme = MaterialTheme.colorScheme
+    val palette = LocalBitchatPalette.current
+    val baseName = title.removePrefix("#").removePrefix("@")
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(ChatHeaderHeight)
-            .padding(start = HeaderInsetStart, end = HeaderInsetEnd),
+            .height(56.dp)
+            .padding(start = 12.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier.size(HeaderTapTarget),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(leadingIconRes),
-                    contentDescription = leadingContentDescription,
-                    modifier = Modifier.size(HeaderIconSize),
-                    tint = leadingIconTint
-                )
-            }
-
-            // Same optical correction as the main header: the 44.dp tap target leaves more gap
-            // than the design wants between glyph and label.
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontSize = HeaderTextSize,
-                fontWeight = FontWeight.Medium,
-                color = colorScheme.primary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            PeerAvatar(
+                name = baseName,
+                color = com.bitchat.android.ui.theme.colorForPeer(baseName, palette),
                 modifier = Modifier
-                    .offset(x = (-6).dp)
+                    .size(38.dp)
+                    .then(
+                        if (onTitleClick != null) {
+                            Modifier
+                                .clip(CircleShape)
+                                .clickable { onTitleClick() }
+                        } else Modifier
+                    ),
+                showActiveIndicator = true
+            )
+
+            Spacer(Modifier.width(10.dp))
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
                     .then(
                         if (onTitleClick != null) {
                             Modifier
                                 .clip(HeaderClusterShape)
                                 .pressScaleClickable(onClick = onTitleClick)
-                                .padding(horizontal = 6.dp, vertical = 4.dp)
-                        } else {
-                            Modifier
-                        }
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                        } else Modifier
                     )
-            )
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = stringResource(R.string.status_active_now),
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 11.sp,
+                    color = Color(0xFF22C55E),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
 
         Row(
@@ -738,30 +752,20 @@ private fun MainHeader(
                 .padding(start = HeaderInsetStart, end = HeaderInsetEnd),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Keep the brand and trailing actions fixed. Only the nickname yields under pressure.
-            BitChatBrandButton(
-                onClick = onTitleClick,
-                onTripleClick = onTripleTitleClick,
-                contentDescription = stringResource(R.string.cd_open_about),
-                modifier = Modifier.size(HeaderTapTarget),
-            )
-
-            // Nudge toward the brand glyph: the 44.dp tap target leaves more optical gap than the
-            // spacing between the mark and path label.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .weight(1f)
-                    .offset(x = (-6).dp)
             ) {
                 Text(
-                    text = "/",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontSize = HeaderTextSize,
-                    // Dimmed: the slash is a separator, not content. At full brightness it competed
-                    // with the nickname beside it.
-                    color = colorScheme.primary.copy(alpha = 0.45f),
-                    modifier = Modifier.padding(end = 2.dp)
+                    text = stringResource(R.string.chat),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = colorScheme.onSurface,
+                    modifier = Modifier
+                        .clickable { onTitleClick() }
+                        .padding(end = 8.dp)
                 )
 
                 NicknameEditor(
@@ -771,11 +775,10 @@ private fun MainHeader(
                 )
             }
 
-            // Order, left to right: unread DMs, notes, channel, people. This cluster is measured
-            // before the weighted nickname, so actions cannot be pushed off-screen by identity.
+            // Order, left to right: unread DMs, notes, channel, people, user avatar.
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 if (hasUnreadPrivateMessages.isNotEmpty()) {
                     HeaderIconButton(
@@ -816,6 +819,15 @@ private fun MainHeader(
                     geohashPeople = geohashPeople,
                     onClick = onSidebarClick,
                     showJoinedChannelCount = crowdingMode == HeaderCrowdingMode.Full
+                )
+
+                PeerAvatar(
+                    name = nickname,
+                    color = palette.accentOrange,
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clickable { onTitleClick() },
+                    showActiveIndicator = isConnected
                 )
             }
         }

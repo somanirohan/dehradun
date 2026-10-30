@@ -56,3 +56,7 @@ fun colorForPeer(identity: PeerIdentity, palette: BitchatPalette): Color {
         value = style.value
     )
 }
+
+fun colorForPeer(nameOrId: String, palette: BitchatPalette): Color {
+    return colorForPeer(PeerIdentity.nickname(nameOrId), palette)
+}

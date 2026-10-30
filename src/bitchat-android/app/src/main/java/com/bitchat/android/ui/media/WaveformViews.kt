@@ -2,6 +2,7 @@ package com.bitchat.android.ui.media
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -50,6 +51,8 @@ fun WaveformPreview(
     path: String,
     sendProgress: Float?,
     playbackProgress: Float?,
+    baseColor: Color? = null,
+    fillColor: Color? = null,
     onLoaded: ((FloatArray) -> Unit)? = null,
     onSeek: ((Float) -> Unit)? = null
 ) {
@@ -70,15 +73,17 @@ fun WaveformPreview(
             }
         }
     }
+    val defaultBase = baseColor ?: Color(0x3394A3B8)
+    val defaultFill = fillColor ?: when {
+        sendProgress != null -> Color(0xFF1E88E5)
+        else -> MaterialTheme.colorScheme.primary
+    }
     WaveformCanvas(
         modifier = modifier,
         samples = stateSamples,
         fillProgress = if (stateSamples.isEmpty()) 0f else progress,
-        baseColor = Color(0x2200FF7F),
-        fillColor = when {
-            sendProgress != null -> Color(0xFF1E88E5) // blue while sending
-            else -> Color(0xFF00C851) // green during playback
-        },
+        baseColor = defaultBase,
+        fillColor = defaultFill,
         onSeek = onSeek
     )
 }

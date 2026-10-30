@@ -375,25 +375,22 @@ fun MessageInput(
     // the outline also firms up slightly in the same fast sweep — present, but muted.
     val borderColor by animateColorAsState(
         targetValue = when {
-            isRecording -> colorScheme.error.copy(alpha = 0.65f)
+            isRecording -> Color.Transparent
             isFocused.value -> palette.inputOutlineFocused
-            else -> palette.inputOutline
+            else -> Color.Transparent
         },
         animationSpec = tween(BitchatMotion.STANDARD_MS, easing = FastOutSlowInEasing),
         label = "composerBorder"
     )
     val borderWidth by animateDpAsState(
-        targetValue = if (isRecording) 1.5.dp else 1.dp,
+        targetValue = if (isRecording) 0.dp else 0.5.dp,
         animationSpec = tween(BitchatMotion.STANDARD_MS, easing = FastOutSlowInEasing),
         label = "composerBorderWidth"
     )
-    // A barely-there lift on focus. While recording the pill turns into a neutral grey slab
-    // (NOT the brand-tinted elevation color) so it protrudes from the flat black chat.
     val containerColor by animateColorAsState(
         targetValue = when {
-            isRecording -> colorScheme.surfaceVariant.copy(alpha = 0.97f)
+            isRecording -> Color(0xFF141C30)
             else -> (if (isFocused.value) palette.inputSurfaceFocused else palette.inputSurface)
-                .copy(alpha = ComposerFillAlpha)
         },
         animationSpec = tween(BitchatMotion.STANDARD_MS, easing = FastOutSlowInEasing),
         label = "composerContainer"
@@ -508,27 +505,24 @@ fun MessageInput(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            // Same content height as the single-line text field, so the pill
-                            // (and the separator above it) does not change size when the
-                            // recording visualizer replaces the field.
-                            .height(22.dp)
+                            .height(24.dp)
                             .alpha(waveformAlpha),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Timestamp on the left, clear of the thumb resting on the record
-                        // button; the waveform keeps the remaining width and its history
-                        // scrolls off the left edge while live data streams in from the right.
+                        RealtimeScrollingWaveform(
+                            modifier = Modifier.weight(1f).height(22.dp),
+                            amplitudeNorm = normalizeAmplitudeSample(amplitude),
+                            barColor = Color.White,
+                            baseColor = Color(0x44FFFFFF)
+                        )
+                        Spacer(Modifier.width(10.dp))
                         val secs = (elapsedMs / 1000).toInt()
                         Text(
                             text = String.format("%02d:%02d", secs / 60, secs % 60),
                             fontFamily = BitchatFontFamily,
-                            color = colorScheme.error,
-                            fontSize = (BASE_FONT_SIZE - 4).sp
-                        )
-                        Spacer(Modifier.width(12.dp))
-                        RealtimeScrollingWaveform(
-                            modifier = Modifier.weight(1f).height(22.dp),
-                            amplitudeNorm = normalizeAmplitudeSample(amplitude)
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -722,6 +716,28 @@ fun MessageInput(
                                     elapsedMs = 0L
                                 }
                             )
+
+                            AnimatedVisibility(
+                                visible = !isRecording,
+                                enter = fadeIn(tween(BitchatMotion.STANDARD_MS)) +
+                                    expandHorizontally(
+                                        tween(BitchatMotion.STANDARD_MS, easing = FastOutSlowInEasing)
+                                    ),
+                                exit = fadeOut(tween(BitchatMotion.QUICK_MS)) +
+                                    shrinkHorizontally(
+                                        tween(BitchatMotion.QUICK_MS, easing = FastOutSlowInEasing)
+                                    )
+                            ) {
+                                FilePickerButton(
+                                    onFileReady = { outPath ->
+                                        onSendFileNote(
+                                            latestSelectedPeer.value,
+                                            latestChannel.value,
+                                            outPath
+                                        )
+                                    }
+                                )
+                            }
                         } else {
                             // No media in this context, so keep an inert send button rather than
                             // leaving a hole where the action cluster should be.
@@ -737,10 +753,7 @@ fun MessageInput(
 }
 
 /**
- * Slide-to-cancel target shown beside the record button while capturing. It always shows the
- * cancel glyph so the destination is unambiguous; as the finger approaches it leans toward
- * it (magnetic pull) and blushes red, and on contact it blooms. Release there cancels;
- * sliding back out returns to send mode. All motion is spring-driven so it stays fluid.
+ * Slide-to-cancel target shown beside the record button while capturing.
  */
 @Composable
 private fun RecordingCancelButton(
@@ -769,16 +782,8 @@ private fun RecordingCancelButton(
         ),
         label = "cancelScale"
     )
-    val container = androidx.compose.ui.graphics.lerp(
-        palette.inputButton,
-        colorScheme.error,
-        if (hover) 1f else proximity * 0.85f
-    )
-    val tint = androidx.compose.ui.graphics.lerp(
-        colorScheme.onSurfaceVariant,
-        colorScheme.onError,
-        if (hover) 1f else proximity * 0.6f
-    )
+    val container = if (hover) colorScheme.error else Color.White.copy(alpha = 0.18f)
+    val tint = if (hover) colorScheme.onError else Color.White
 
     Box(
         modifier = modifier
@@ -797,7 +802,7 @@ private fun RecordingCancelButton(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Filled.Close,
+                imageVector = Icons.Filled.Delete,
                 contentDescription = "Cancel recording",
                 tint = tint,
                 modifier = Modifier.size(ComposerIconSize)
@@ -807,8 +812,7 @@ private fun RecordingCancelButton(
 }
 
 /**
- * Send affordance. Only rendered when there is something to send, so its mere presence is the
- * signal; it does not need to shout in the terminal's full-brightness green as well.
+ * Send affordance. Rendered as a vibrant blue circle with white arrow matching mockup.
  */
 @Composable
 private fun SendButton(
@@ -817,27 +821,19 @@ private fun SendButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true
 ) {
-    val palette = LocalBitchatPalette.current
     val colorScheme = MaterialTheme.colorScheme
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-
-    ComposerActionSurface(
-        isActive = enabled,
-        isPressed = isPressed,
-        // Private chats and channels keep their orange identity, disc and glyph together.
-        activeColor = if (isAccented) palette.accentOrange else colorScheme.primary,
-        modifier = modifier.clickable(
-            interactionSource = interactionSource,
-            indication = null,
-            enabled = enabled
-        ) { onSend() }
-    ) { tint ->
+    Box(
+        modifier = modifier
+            .size(34.dp)
+            .background(colorScheme.primary, CircleShape)
+            .clickable(enabled = enabled) { onSend() },
+        contentAlignment = Alignment.Center
+    ) {
         Icon(
             imageVector = Icons.Filled.ArrowUpward,
             contentDescription = stringResource(id = R.string.send_message),
-            modifier = Modifier.size(ComposerIconSize),
-            tint = tint
+            modifier = Modifier.size(18.dp),
+            tint = Color.White
         )
     }
 }

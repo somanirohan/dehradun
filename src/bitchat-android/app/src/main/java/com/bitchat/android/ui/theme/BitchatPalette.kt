@@ -49,30 +49,30 @@ data class BitchatPalette(
 )
 
 val DarkBitchatPalette = BitchatPalette(
-    inputOutline = Color(0xFF333635),
-    inputOutlineFocused = Color(0xFF5A605D),
-    inputSurface = Color(0xFF0B0B0B),
-    inputSurfaceFocused = Color(0xFF151515),
-    inputButton = Color(0xFF1E1E1E),
-    textTertiary = Color(0xFF6B776B),
-    accentOrange = Color(0xFFFF9F0A),
-    accentPurple = Color(0xFFBF5AF2),
+    inputOutline = Color(0xFF5B403E),
+    inputOutlineFocused = Color(0xFFFFB3AD),
+    inputSurface = Color(0xFF131B2E),
+    inputSurfaceFocused = Color(0xFF171F33),
+    inputButton = Color(0xFF222A3D),
+    textTertiary = Color(0xFFAB8986),
+    accentOrange = Color(0xFFEF4444),
+    accentPurple = Color(0xFFB4C5FF),
     peerColors = PeerColorStyle.Dark,
 )
 
 val LightBitchatPalette = BitchatPalette(
-    inputOutline = Color(0xFFCFD3D1),
-    inputOutlineFocused = Color(0xFF8E9490),
-    inputSurface = Color(0xFFFAFAFA),
-    inputSurfaceFocused = Color(0xFFF2F2F2),
-    inputButton = Color(0xFFE8E8E8),
-    textTertiary = Color(0xFF757F75),
-    accentOrange = Color(0xFFFF9500),
-    accentPurple = Color(0xFFAF52DE),
+    inputOutline = Color(0xFFC3C6D7),
+    inputOutlineFocused = Color(0xFF004AC6),
+    inputSurface = Color(0xFFF2F3FF),
+    inputSurfaceFocused = Color(0xFFEAEDFF),
+    inputButton = Color(0xFFEAEDFF),
+    textTertiary = Color(0xFF737686),
+    accentOrange = Color(0xFFBB0112),
+    accentPurple = Color(0xFF2563EB),
     peerColors = PeerColorStyle.Light,
 )
 
-val LocalBitchatPalette = staticCompositionLocalOf { DarkBitchatPalette }
+val LocalBitchatPalette = staticCompositionLocalOf { LightBitchatPalette }
 
 /**
  * Motion tokens. The redesign leans on short, snappy transitions: long durations read as

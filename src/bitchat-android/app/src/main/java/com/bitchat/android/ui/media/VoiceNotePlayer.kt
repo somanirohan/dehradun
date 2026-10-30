@@ -24,7 +24,10 @@ import androidx.compose.ui.unit.sp
 fun VoiceNotePlayer(
     path: String,
     progressOverride: Float? = null,
-    progressColor: Color? = null
+    progressColor: Color? = null,
+    isSelf: Boolean = false,
+    waveformBaseColor: Color? = null,
+    waveformFillColor: Color? = null
 ) {
     var isPlaying by remember { mutableStateOf(false) }
     var isPrepared by remember { mutableStateOf(false) }
@@ -85,32 +88,46 @@ fun VoiceNotePlayer(
     }
     DisposableEffect(Unit) { onDispose { try { player.release() } catch (_: Exception) {} } }
 
+    val controlsEnabled = isPrepared && !isError && progressOverride == null
+    val playBtnBg = if (isSelf) Color.White else Color(0xFF1E293B)
+    val playBtnTint = if (isSelf) Color(0xFF1B64F2) else Color.White
+    val baseColor = waveformBaseColor ?: if (isSelf) Color.White.copy(alpha = 0.45f) else Color(0xFFCBD5E1)
+    val fillColor = waveformFillColor ?: if (isSelf) Color.White else Color(0xFF334155)
+    val textColor = if (isSelf) Color.White.copy(alpha = 0.9f) else Color(0xFF64748B)
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        // Disable play/pause while showing send progress override (optional UX choice)
-        val controlsEnabled = isPrepared && !isError && progressOverride == null
-        FilledTonalIconButton(onClick = { if (controlsEnabled) isPlaying = !isPlaying }, enabled = controlsEnabled, modifier = Modifier.size(28.dp)) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .background(playBtnBg, CircleShape)
+                .clickable(enabled = controlsEnabled) { if (controlsEnabled) isPlaying = !isPlaying },
+            contentAlignment = Alignment.Center
+        ) {
             Icon(
                 imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                contentDescription = if (isPlaying) "Pause" else "Play"
+                contentDescription = if (isPlaying) "Pause" else "Play",
+                tint = playBtnTint,
+                modifier = Modifier.size(18.dp)
             )
         }
-        val progressBarColor = progressColor ?: MaterialTheme.colorScheme.primary
         com.bitchat.android.ui.media.WaveformPreview(
             modifier = Modifier
-                .height(24.dp)
+                .height(26.dp)
                 .weight(1f)
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = 4.dp, vertical = 2.dp),
             path = path,
             sendProgress = progressOverride,
             playbackProgress = if (progressOverride == null) progress else null,
+            baseColor = baseColor,
+            fillColor = fillColor,
             onSeek = seekTo
         )
         val durText = if (durationMs > 0) String.format("%02d:%02d", (durationMs / 1000) / 60, (durationMs / 1000) % 60) else "--:--"
-        Text(text = durText, fontFamily = BitchatFontFamily, fontSize = 12.sp)
+        Text(text = durText, fontFamily = BitchatFontFamily, fontSize = 12.sp, color = textColor)
     }
 }
 

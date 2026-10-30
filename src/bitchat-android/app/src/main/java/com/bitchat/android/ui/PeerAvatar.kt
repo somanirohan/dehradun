@@ -2,6 +2,7 @@ package com.bitchat.android.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -34,6 +35,7 @@ internal fun PeerAvatar(
     isFavorite: Boolean = false,
     theyFavoritedUs: Boolean = false,
     isVerified: Boolean = false,
+    showActiveIndicator: Boolean = true,
     badge: (@Composable () -> Unit)? = null
 ) {
     val palette = LocalBitchatPalette.current
@@ -46,7 +48,7 @@ internal fun PeerAvatar(
         Box(
             modifier = Modifier
                 .size(38.dp)
-                .background(color.copy(alpha = 0.16f), CircleShape),
+                .background(color.copy(alpha = 0.18f), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -72,6 +74,15 @@ internal fun PeerAvatar(
                     badge()
                 }
             }
+        } else if (showActiveIndicator) {
+            Box(
+                modifier = Modifier
+                    .size(11.dp)
+                    .align(Alignment.BottomEnd)
+                    .background(colorScheme.surface, CircleShape)
+                    .padding(1.5.dp)
+                    .background(Color(0xFF22C55E), CircleShape)
+            )
         }
 
         if (isFavorite || theyFavoritedUs) {

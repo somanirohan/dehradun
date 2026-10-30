@@ -18,51 +18,81 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 
 // Standard UI semantics live in Material so stock components and custom Bitchat composables
-// share one source of truth. LocalBitchatPalette below only supplies app-specific extra colors.
+// share one source of truth. LocalBitchatPalette below supplies app-specific extra colors.
 internal val DarkBitchatColorScheme = darkColorScheme(
-    primary = Color(0xFF32D74B),
-    onPrimary = Color.Black,
-    primaryContainer = Color(0xFF163D1D),
-    onPrimaryContainer = Color(0xFFB8F5C1),
-    secondary = Color(0xFF0A84FF),
-    onSecondary = Color.Black,
-    secondaryContainer = Color(0xFF082E54),
-    onSecondaryContainer = Color(0xFFC2E0FF),
-    tertiary = DarkBitchatPalette.accentOrange,
-    onTertiary = Color.Black,
-    background = Color(0xFF000000),
-    onBackground = Color(0xFFF5F5F5),
-    surface = Color(0xFF0E150E),
-    onSurface = Color(0xFFF5F5F5),
-    surfaceVariant = Color(0xFF182118),
-    onSurfaceVariant = Color(0xFF9AA69A),
-    outline = Color(0xFF2A3A2A),
-    outlineVariant = Color(0xFF1C271C),
-    error = Color(0xFFFF453A),
-    onError = Color.Black
+    primary = Color(0xFFFFB3AD),
+    onPrimary = Color(0xFF68000A),
+    primaryContainer = Color(0xFFFF5451),
+    onPrimaryContainer = Color(0xFF5C0008),
+    inversePrimary = Color(0xFFB91A24),
+    secondary = Color(0xFFB4C5FF),
+    onSecondary = Color(0xFF002A78),
+    secondaryContainer = Color(0xFF0053DB),
+    onSecondaryContainer = Color(0xFFCDD7FF),
+    tertiary = Color(0xFF4AE176),
+    onTertiary = Color(0xFF003915),
+    tertiaryContainer = Color(0xFF00A74B),
+    onTertiaryContainer = Color(0xFF003111),
+    error = Color(0xFFFFB4AB),
+    onError = Color(0xFF690005),
+    errorContainer = Color(0xFF93000A),
+    onErrorContainer = Color(0xFFFFDAD6),
+    background = Color(0xFF0B1326),
+    onBackground = Color(0xFFDAE2FD),
+    surface = Color(0xFF0B1326),
+    onSurface = Color(0xFFDAE2FD),
+    surfaceVariant = Color(0xFF2D3449),
+    onSurfaceVariant = Color(0xFFE4BEBA),
+    surfaceTint = Color(0xFFFFB3AD),
+    inverseSurface = Color(0xFFDAE2FD),
+    inverseOnSurface = Color(0xFF283044),
+    outline = Color(0xFFAB8986),
+    outlineVariant = Color(0xFF5B403E),
+    surfaceDim = Color(0xFF0B1326),
+    surfaceBright = Color(0xFF31394D),
+    surfaceContainerLowest = Color(0xFF060E20),
+    surfaceContainerLow = Color(0xFF131B2E),
+    surfaceContainer = Color(0xFF171F33),
+    surfaceContainerHigh = Color(0xFF222A3D),
+    surfaceContainerHighest = Color(0xFF2D3449)
 )
 
 internal val LightBitchatColorScheme = lightColorScheme(
-    primary = Color(0xFF248A3D),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFD5F1D8),
-    onPrimaryContainer = Color(0xFF0A3212),
-    secondary = Color(0xFF007AFF),
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFD6E9FF),
-    onSecondaryContainer = Color(0xFF002C5C),
-    tertiary = LightBitchatPalette.accentOrange,
-    onTertiary = Color.Black,
-    background = Color(0xFFFFFFFF),
-    onBackground = Color(0xFF131A13),
-    surface = Color(0xFFF2F6F2),
-    onSurface = Color(0xFF131A13),
-    surfaceVariant = Color(0xFFE7EDE7),
-    onSurfaceVariant = Color(0xFF4C574C),
-    outline = Color(0xFFCBD6CB),
-    outlineVariant = Color(0xFFDEE6DE),
-    error = Color(0xFFD70015),
-    onError = Color.White
+    primary = Color(0xFF004AC6),
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFF2563EB),
+    onPrimaryContainer = Color(0xFFEEEFFF),
+    inversePrimary = Color(0xFFB4C5FF),
+    secondary = Color(0xFFBB0112),
+    onSecondary = Color(0xFFFFFFFF),
+    secondaryContainer = Color(0xFFE02928),
+    onSecondaryContainer = Color(0xFFFFFBFF),
+    tertiary = Color(0xFF006329),
+    onTertiary = Color(0xFFFFFFFF),
+    tertiaryContainer = Color(0xFF007F36),
+    onTertiaryContainer = Color(0xFFC7FFCA),
+    error = Color(0xFFBA1A1A),
+    onError = Color(0xFFFFFFFF),
+    errorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color(0xFF93000A),
+    background = Color(0xFFFAF8FF),
+    onBackground = Color(0xFF131B2E),
+    surface = Color(0xFFFAF8FF),
+    onSurface = Color(0xFF131B2E),
+    surfaceVariant = Color(0xFFDAE2FD),
+    onSurfaceVariant = Color(0xFF434655),
+    surfaceTint = Color(0xFF0053DB),
+    inverseSurface = Color(0xFF283044),
+    inverseOnSurface = Color(0xFFEEF0FF),
+    outline = Color(0xFF737686),
+    outlineVariant = Color(0xFFC3C6D7),
+    surfaceDim = Color(0xFFD2D9F4),
+    surfaceBright = Color(0xFFFAF8FF),
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFF2F3FF),
+    surfaceContainer = Color(0xFFEAEDFF),
+    surfaceContainerHigh = Color(0xFFE2E7FF),
+    surfaceContainerHighest = Color(0xFFDAE2FD)
 )
 
 @Composable
@@ -70,15 +100,15 @@ fun BitchatTheme(
     darkTheme: Boolean? = null,
     content: @Composable () -> Unit
 ) {
-    // App-level override from ThemePreferenceManager
-    val themePref by ThemePreferenceManager.themeFlow.collectAsState(initial = ThemePreference.System)
+    // App-level override from ThemePreferenceManager, defaulting to Light
+    val themePref by ThemePreferenceManager.themeFlow.collectAsState(initial = ThemePreference.Light)
     val shouldUseDark = when (darkTheme) {
         true -> true
         false -> false
         null -> when (themePref) {
             ThemePreference.Dark -> true
             ThemePreference.Light -> false
-            ThemePreference.System -> isSystemInDarkTheme()
+            ThemePreference.System -> false // Default to Light mode
         }
     }
 

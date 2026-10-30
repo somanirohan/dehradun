@@ -29,13 +29,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -402,32 +405,21 @@ fun MessageItem(
         verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.Top
-            ) {
-                // Provide a small end padding for own private messages so overlay doesn't cover text
-                val endPad = if (message.isPrivate && message.sender == currentUserNickname) 16.dp else 0.dp
-                // Create a custom layout that combines selectable text with clickable nickname areas
-                MessageTextWithClickableNicknames(
-                    message = message,
-                    messages = messages,
-                    currentUserNickname = currentUserNickname,
-                    meshService = meshService,
-                    mentionPeerIdentities = mentionPeerIdentities,
-                    colorScheme = colorScheme,
-                    timeFormatter = timeFormatter,
-                    showSender = showSender,
-                    onNicknameClick = onNicknameClick,
-                    onMessageLongPress = onMessageLongPress,
-                    onCancelTransfer = onCancelTransfer,
-                    onImageClick = onImageClick,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(end = endPad)
-                )
-            }
+            MessageTextWithClickableNicknames(
+                message = message,
+                messages = messages,
+                currentUserNickname = currentUserNickname,
+                meshService = meshService,
+                mentionPeerIdentities = mentionPeerIdentities,
+                colorScheme = colorScheme,
+                timeFormatter = timeFormatter,
+                showSender = showSender,
+                onNicknameClick = onNicknameClick,
+                onMessageLongPress = onMessageLongPress,
+                onCancelTransfer = onCancelTransfer,
+                onImageClick = onImageClick,
+                modifier = Modifier.fillMaxWidth()
+            )
 
             // Delivery status for private messages (overlay, non-displacing)
             if (message.isPrivate && message.sender == currentUserNickname) {
@@ -696,39 +688,32 @@ internal fun TextMessageLayout(
 ) {
     val palette = LocalBitchatPalette.current
     val myPeerId = meshService.myPeerID
+    val isSelf = message.isFromSelf(currentUserNickname, myPeerId)
     val displayMessage = remember(message, bodyContent) {
         if (bodyContent == message.content) message else message.copy(content = bodyContent)
     }
-    val senderText = remember(message, currentUserNickname, myPeerId, palette) {
-        formatTextMessageSender(
-            message = message,
-            currentUserNickname = currentUserNickname,
-            myPeerID = myPeerId,
-            palette = palette,
-        )
-    }
-    // The timestamp trails the body rather than occupying its own column, so a short message
-    // no longer reserves a full-width row for eight grey characters.
+
     val bodyText = remember(
         displayMessage,
         currentUserNickname,
         palette,
         colorScheme.onSurface,
-        colorScheme.secondary,
         mentionPeerIdentities,
-        timeFormatter
+        timeFormatter,
+        isSelf
     ) {
         formatTextMessageBody(
             message = displayMessage,
             currentUserNickname = currentUserNickname,
             palette = palette,
-            contentColor = colorScheme.onSurface,
-            linkColor = colorScheme.secondary,
+            contentColor = if (isSelf) Color.White else colorScheme.onSurface,
+            linkColor = if (isSelf) Color(0xFFBAE6FD) else colorScheme.primary,
             mentionPeerIdentities = mentionPeerIdentities,
             timeFormatter = timeFormatter,
+            includeTimestamp = false
         )
     }
-    val isSelf = message.isFromSelf(currentUserNickname, myPeerId)
+
     val haptic = LocalHapticFeedback.current
     val context = LocalContext.current
     val handleLongPress: () -> Unit = {
@@ -736,60 +721,116 @@ internal fun TextMessageLayout(
         onMessageLongPress?.invoke(message)
     }
 
-    Column(
+    val bubbleShape = if (isSelf) {
+        RoundedCornerShape(topStart = 18.dp, topEnd = 4.dp, bottomEnd = 18.dp, bottomStart = 18.dp)
+    } else {
+        RoundedCornerShape(topStart = 4.dp, topEnd = 18.dp, bottomEnd = 18.dp, bottomStart = 18.dp)
+    }
+    val bubbleBg = if (isSelf) colorScheme.primary else colorScheme.surface
+
+    Row(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(MessageGrouping.SENDER_TO_BODY_SPACING),
+        horizontalArrangement = if (isSelf) Arrangement.End else Arrangement.Start,
+        verticalAlignment = Alignment.Bottom
     ) {
-        if (showSender) {
-            AnnotatedClickableText(
-                text = senderText,
-                annotationTags = listOf("nickname_click"),
-                onAnnotationClick = { tag, item ->
-                    if (tag == "nickname_click" && !isSelf && onNicknameClick != null) {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        onNicknameClick.invoke(item)
-                        true
-                    } else {
-                        false
-                    }
-                },
-                onLongPress = handleLongPress,
+        if (!isSelf && showSender) {
+            val (baseName, _) = splitSuffix(message.sender)
+            PeerAvatar(
+                name = baseName,
+                color = com.bitchat.android.ui.theme.colorForPeer(message.senderPeerID ?: message.sender, palette),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = MessageGrouping.SENDER_TOP_PADDING),
-                fontFamily = BitchatFontFamily,
-                softWrap = false,
-                overflow = TextOverflow.Ellipsis,
-                style = MessageSenderTextStyle,
+                    .size(32.dp)
+                    .clickable { onNicknameClick?.invoke(baseName) },
+                showActiveIndicator = true
             )
+            Spacer(Modifier.width(8.dp))
+        } else if (!isSelf && !showSender) {
+            Spacer(Modifier.width(40.dp))
         }
 
-        AnnotatedClickableText(
-            text = bodyText,
-            annotationTags = listOf("geohash_click", "url_click"),
-            onAnnotationClick = { tag, item ->
-                when (tag) {
-                    "geohash_click" -> {
-                        navigateToGeohash(context, item)
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        true
-                    }
-
-                    "url_click" -> {
-                        openMessageUrl(context, item)
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        true
-                    }
-
-                    else -> false
+        Box(
+            modifier = Modifier
+                .widthIn(min = 60.dp, max = 280.dp)
+                .background(bubbleBg, bubbleShape)
+                .then(
+                    if (!isSelf) Modifier.border(0.5.dp, colorScheme.outlineVariant, bubbleShape)
+                    else Modifier
+                )
+                .combinedClickable(
+                    onClick = {},
+                    onLongClick = handleLongPress
+                )
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+        ) {
+            Column {
+                if (!isSelf && showSender) {
+                    val (baseName, _) = splitSuffix(message.sender)
+                    Text(
+                        text = baseName,
+                        fontFamily = BitchatFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        color = com.bitchat.android.ui.theme.colorForPeer(message.senderPeerID ?: message.sender, palette),
+                        modifier = Modifier
+                            .clickable { onNicknameClick?.invoke(baseName) }
+                            .padding(bottom = 3.dp)
+                    )
                 }
-            },
-            onLongPress = handleLongPress,
-            fontFamily = BitchatFontFamily,
-            softWrap = true,
-            overflow = TextOverflow.Visible,
-            style = MessageBodyTextStyle.copy(color = colorScheme.onSurface),
-        )
+
+                AnnotatedClickableText(
+                    text = bodyText,
+                    annotationTags = listOf("geohash_click", "url_click"),
+                    onAnnotationClick = { tag, item ->
+                        when (tag) {
+                            "geohash_click" -> {
+                                navigateToGeohash(context, item)
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                true
+                            }
+                            "url_click" -> {
+                                openMessageUrl(context, item)
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                true
+                            }
+                            else -> false
+                        }
+                    },
+                    onLongPress = handleLongPress,
+                    fontFamily = BitchatFontFamily,
+                    softWrap = true,
+                    overflow = TextOverflow.Visible,
+                    style = MessageBodyTextStyle.copy(
+                        color = if (isSelf) Color.White else colorScheme.onSurface,
+                        lineHeight = 20.sp
+                    ),
+                )
+
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = timeFormatter.format(message.timestamp),
+                        fontSize = 10.sp,
+                        fontFamily = BitchatFontFamily,
+                        color = if (isSelf) Color.White.copy(alpha = 0.82f) else colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
+                    )
+                    if (isSelf) {
+                        Spacer(Modifier.width(4.dp))
+                        Text(
+                            text = "✓✓",
+                            fontSize = 10.sp,
+                            fontFamily = BitchatFontFamily,
+                            color = Color.White.copy(alpha = 0.9f),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

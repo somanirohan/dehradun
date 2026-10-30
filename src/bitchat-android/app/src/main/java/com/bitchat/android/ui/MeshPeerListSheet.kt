@@ -1493,91 +1493,79 @@ private fun PeerItem(
     )
     val baseColor = if (isMe) palette.accentOrange else assignedColor
 
+    val rowBg = if (isSelected) Color(0xFF1E2638) else Color.Transparent
+    val nameColor = if (isSelected) Color.White else colorScheme.onSurface
+    val subtitleColor = if (isSelected) Color(0xFF22C55E) else if (isConnected) Color(0xFF22C55E) else colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 3.dp)
+            .background(rowBg, RoundedCornerShape(16.dp))
             .clickable(onClick = onItemClick)
-            .padding(horizontal = SheetRowHorizontal, vertical = 10.dp),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         PeerAvatar(
             name = baseNameRaw,
-            color = baseColor,
+            color = if (isSelected) Color.White else baseColor,
             isFavorite = isFavorite,
             theyFavoritedUs = theyFavoritedUs,
             isVerified = isVerified,
-            badge = {
-                when {
-                    isConnected -> Icon(
-                        painter = painterResource(
-                            conversationTransportIcon(
-                                isReachedOverInternet = false,
-                                isWifiAware = isWifiAware,
-                                isDirect = isDirect
-                            )
-                        ),
-                        contentDescription = connectionDescription,
-                        modifier = Modifier.size(13.dp),
-                        tint = colorScheme.primary
-                    )
-
-                    showNostrGlobe -> Icon(
-                        painter = painterResource(R.drawable.ic_spec_globe),
-                        contentDescription = stringResource(R.string.cd_reachable_via_nostr),
-                        modifier = Modifier.size(13.dp),
-                        tint = palette.accentPurple
-                    )
-
-                    else -> Icon(
-                        imageVector = Icons.Outlined.Circle,
-                        contentDescription = stringResource(R.string.cd_offline_favorite),
-                        modifier = Modifier.size(11.dp),
-                        tint = palette.textTertiary
-                    )
-                }
-            }
+            showActiveIndicator = isConnected
         )
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        Row(
-            modifier = Modifier.weight(1f),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = baseName,
+                    fontFamily = BitchatFontFamily,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = nameColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                if (suffix.isNotEmpty()) {
+                    Text(
+                        text = suffix,
+                        fontFamily = BitchatFontFamily,
+                        fontSize = 13.sp,
+                        color = (if (isSelected) Color.White else colorScheme.onSurfaceVariant).copy(alpha = 0.6f)
+                    )
+                }
+            }
+
             Text(
-                text = baseName,
+                text = if (isConnected || isSelected) stringResource(R.string.status_active_now) else "Offline",
                 fontFamily = BitchatFontFamily,
-                fontSize = 14.sp,
-                fontWeight = if (isMe) FontWeight.Bold else FontWeight.Medium,
-                color = baseColor,
+                fontSize = 12.sp,
+                color = subtitleColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-
-            if (suffix.isNotEmpty()) {
-                Text(
-                    text = suffix,
-                    fontFamily = BitchatFontFamily,
-                    fontSize = 14.sp,
-                    fontWeight = if (isMe) FontWeight.Bold else FontWeight.Medium,
-                    color = baseColor.copy(alpha = SUFFIX_ALPHA)
-                )
-            }
         }
 
-        UnreadBadge(
-            count = unreadCount,
-            colorScheme = colorScheme,
-            modifier = Modifier.padding(start = 4.dp)
-        )
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "04:25PM",
+                fontSize = 11.sp,
+                fontFamily = BitchatFontFamily,
+                color = (if (isSelected) Color.White else colorScheme.onSurfaceVariant).copy(alpha = 0.6f)
+            )
 
-        if (isSelected) {
-            Box(
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .size(SheetRowSelectedDot)
-                    .background(colorScheme.primary, CircleShape)
+            UnreadBadge(
+                count = unreadCount,
+                colorScheme = colorScheme
             )
         }
     }
